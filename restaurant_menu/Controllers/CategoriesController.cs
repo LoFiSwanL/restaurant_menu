@@ -153,7 +153,6 @@ namespace NamRestaurantApi.Controllers
             dto.Name = dto.Name?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(dto.Name) || dto.Name.Length < 3) return BadRequest("Неправильна назва");
 
-            // check duplicate name (other than this id)
             var other = await _context.Categories.FirstOrDefaultAsync(c => c.Name.ToLower() == dto.Name.ToLower() && c.Id != id);
             if (other != null) return Conflict(new { message = "Інша категорія з такою назвою вже існує.", existingId = other.Id });
 
@@ -177,7 +176,6 @@ namespace NamRestaurantApi.Controllers
             return NoContent();
         }
 
-        // Upload image for category as base64 in JSON: { imageBase64: "..." }
         [HttpPost("upload")]
         public async Task<ActionResult> Upload([FromHeader(Name = "Admin-Pass")] string pass, [FromBody] ImageUploadDto dto)
         {
@@ -201,7 +199,6 @@ namespace NamRestaurantApi.Controllers
             }
         }
 
-        // Simple login endpoint to validate admin password from the client-side login form.
         [HttpPost("login")]
         public ActionResult Login([FromBody] LoginDto dto)
         {
@@ -234,7 +231,6 @@ namespace NamRestaurantApi.Controllers
                 return Ok(new { message = "updated", id = existing.Id });
             }
 
-            // create new category and move items from existing into it
             var newCat = new Category
             {
                 Name = dto.NewName?.Trim() ?? existing.Name,

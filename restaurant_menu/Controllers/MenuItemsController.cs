@@ -63,7 +63,6 @@ namespace NamRestaurantApi.Controllers
             dto.Name = dto.Name?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest("Назва не може бути порожньою");
 
-            // validate numeric fields are not negative
             if (dto.Price < 0) return BadRequest("Ціна не може бути від'ємною");
             if (dto.Calories.HasValue && dto.Calories.Value < 0) return BadRequest("Калорії не можуть бути від'ємними");
             if (dto.Protein.HasValue && dto.Protein.Value < 0) return BadRequest("Білки не можуть бути від'ємними");
@@ -84,7 +83,6 @@ namespace NamRestaurantApi.Controllers
 
         var item = await _context.MenuItems.FindAsync(id);
         if (item == null) return NotFound();
-        // validate numeric fields are not negative
         if (dto.Price < 0) return BadRequest("Ціна не може бути від'ємною");
         if (dto.Calories.HasValue && dto.Calories.Value < 0) return BadRequest("Калорії не можуть бути від'ємними");
         if (dto.Protein.HasValue && dto.Protein.Value < 0) return BadRequest("Білки не можуть бути від'ємними");
@@ -112,12 +110,11 @@ namespace NamRestaurantApi.Controllers
             if (pass != _adminPass) return Unauthorized("невірний пароль");
             var item = await _context.MenuItems.FindAsync(id);
             if (item == null) return NotFound();
-            _context.MenuItems.Remove(item); // This line is unchanged but included for context
+            _context.MenuItems.Remove(item); 
             await _context.SaveChangesAsync();
             return NoContent();
         }
 
-        // Upload image as base64 in JSON: { imageBase64: "..." }
         [HttpPost("upload")]
         public async Task<ActionResult> Upload([FromHeader(Name = "Admin-Pass")] string pass, [FromBody] ImageUploadDto dto)
         {

@@ -52,7 +52,6 @@
             .thumb{display:none}
         }
 
-        /* modal */
         .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:40}
         .modal .box{background:var(--card);padding:24px;border-radius:12px;max-width:920px;width:94%;color:#fff;display:flex;gap:20px;align-items:flex-start;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
         .modal .modal-img{width:280px;height:180px;border-radius:8px;overflow:hidden;flex:0 0 280px;background:#111}
@@ -69,7 +68,6 @@
         }
         .modal .box h2{margin:0 0 8px}
         .modal .close{position:absolute;right:18px;top:18px;background:transparent;border:none;color:#fff;font-size:18px}
-        /* search */
         .search-bar{
             background:linear-gradient(180deg,#275935,#1f4b2a);padding:16px;border-radius:18px;display:flex;align-items:center;gap:14px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 18px rgba(10,40,20,0.25)
         }
@@ -107,7 +105,6 @@
         </div>
     </section>
 
-    <!-- search + category chips -->
     <div class="search-wrap" style="max-width:1200px;margin:20px auto;padding:0 16px">
         <div class="search-bar">
             <span class="search-icon">🔍</span>
@@ -169,11 +166,9 @@
 
     <script>
         function seedImage(seed, w=800, h=600){
-            // picsum seeded image
             return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
         }
 
-        // helper to read property in either PascalCase or camelCase or original
         function getProp(obj, name){
             if(!obj) return undefined;
             if(name in obj) return obj[name];
@@ -232,7 +227,6 @@
                 const banner = document.createElement('div');
                 banner.className = 'cat-banner';
                 const img = document.createElement('img');
-                // prefer category image if set, otherwise fall back to first menu item image or placeholder
                 const firstImg = getProp(cat,'ImageUrl') || (cat.menuItems && cat.menuItems.length && (getProp(cat.menuItems[0],'ImageUrl') || getProp(cat.menuItems[0],'imageUrl')));
                 img.src = firstImg || seedImage(cat.id || cat.name || Math.random());
                 img.alt = cat.name;
@@ -268,17 +262,14 @@
                 wrap.appendChild(items);
                 root.appendChild(wrap);
             });
-        // build chips from categories
         const chips = document.getElementById('chips');
         chips.innerHTML = '';
         data.forEach(c=>{
             const ch = document.createElement('div'); ch.className='chip'; ch.textContent = c.name; ch.onclick = ()=> { document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); ch.classList.add('active'); filterByCategory(c.id); };
             chips.appendChild(ch);
         });
-        // next button for chips scroller
         const next = document.getElementById('chipsNext');
         next.onclick = ()=>{ const sc = document.querySelector('.chips'); if(sc) sc.scrollBy({left:300,behavior:'smooth'}); };
-            // reveal animation
             document.querySelectorAll('.category-section').forEach((el,i)=>{
                 setTimeout(()=>el.classList.add('visible'), i*80);
             });
@@ -291,8 +282,6 @@
 
         loadCategories();
 
-        // search and chips
-        // debounce helper
         function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
 
         document.getElementById('searchInput')?.addEventListener('input', debounce((e)=>{
@@ -306,19 +295,16 @@
         }, 180));
 
         function filterByCategory(catId){
-            // scroll to the category section with matching data-id
             const sec = Array.from(document.querySelectorAll('.category-section')).find(s=> s.querySelector('.cat-title')?.dataset.id == catId);
             if(sec) sec.scrollIntoView({behavior:'smooth',block:'start'});
         }
 
-        // header scroll effect
         const topbar = document.querySelector('.topbar');
         window.addEventListener('scroll', ()=>{
             if(window.scrollY>40) topbar.classList.add('scrolled'); else topbar.classList.remove('scrolled');
             updateActiveNav();
         });
 
-        // smooth scroll and active nav
         document.querySelectorAll('.nav a').forEach(a=>{
             a.addEventListener('click', e=>{
                 e.preventDefault();
@@ -339,7 +325,6 @@
             document.querySelectorAll('.nav a').forEach(a=> a.classList.toggle('active', a.getAttribute('href').slice(1)===current));
         }
 
-        // burger for mobile
         const burger = document.getElementById('burger');
         const nav = document.getElementById('nav');
         function checkMobile(){
