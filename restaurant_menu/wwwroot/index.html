@@ -1,0 +1,353 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>NAM — Меню (натхнення)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg:#0f0f0f; --muted:#bdbdbd; --accent:#c7a17a; --card:#141414;
+        }
+        *{box-sizing:border-box}
+        body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:#fff;background:var(--bg);-webkit-font-smoothing:antialiased}
+
+        .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid rgba(255,255,255,0.03);position:sticky;top:0;background:rgba(15,15,15,0.6);backdrop-filter: blur(4px);z-index:50;transition:padding 220ms ease, background 220ms ease}
+        .topbar.scrolled{padding:10px 24px;background:rgba(10,10,10,0.9)}
+        .brand{font-weight:700;letter-spacing:4px;color:var(--accent);font-size:20px;transition:transform 300ms}
+        .nav a{color:var(--muted);text-decoration:none;margin-left:20px;font-size:14px;transition:color 180ms}
+        .nav a.active{color:var(--accent)}
+
+        .hero{background:linear-gradient(180deg,rgba(0,0,0,0.45),rgba(0,0,0,0.6)), url('https://picsum.photos/seed/hero/1600/600') center/cover no-repeat;padding:110px 20px 60px;text-align:left;transition:transform 400ms ease}
+        .hero h1{margin:0;color:var(--accent);font-size:56px;letter-spacing:2px}
+        .hero p{margin-top:10px;color:var(--muted);font-size:18px;max-width:800px}
+
+        main{max-width:1200px;margin:32px auto;padding:0 16px}
+        .category-section{display:grid;grid-template-columns:320px 1fr;gap:24px;margin-bottom:22px;align-items:start;opacity:0;transform:translateY(10px);transition:opacity 420ms ease, transform 420ms ease}
+        .category-section.visible{opacity:1;transform:none}
+
+        .cat-banner{position:relative;height:180px;border-radius:10px;overflow:hidden;background:#222;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+        .cat-banner img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 600ms cubic-bezier(.2,.8,.2,1)}
+        .cat-banner:hover img{transform:scale(1.04)}
+        .cat-banner .overlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent,rgba(0,0,0,0.6))}
+        .cat-title{position:absolute;left:16px;bottom:16px;font-size:20px;color:var(--accent);z-index:3;text-transform:uppercase;letter-spacing:1px}
+
+        .items{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:8px 12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.45)}
+        .item{display:flex;gap:12px;align-items:center;padding:10px;border-radius:8px;transition:background 220ms, transform 220ms;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .item:not(:last-child){margin-bottom:0}
+        .item:hover{background:rgba(255,255,255,0.02);transform:translateY(-4px)}
+
+        .thumb{width:84px;height:60px;border-radius:6px;overflow:hidden;flex:0 0 84px;background:#222}
+        .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
+        .item-left h3{margin:0;font-size:16px}
+        .desc{margin:6px 0 0;color:var(--muted);font-size:13px;max-width:520px}
+        .item-right{min-width:90px;text-align:right;color:var(--muted);font-weight:700}
+
+        footer{padding:28px;text-align:center;color:var(--muted);font-size:14px}
+
+        @media (max-width:900px){
+            .category-section{grid-template-columns:1fr}
+            .cat-banner{height:160px}
+            .thumb{display:none}
+        }
+
+        /* modal */
+        .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:40}
+        .modal .box{background:var(--card);padding:24px;border-radius:12px;max-width:920px;width:94%;color:#fff;display:flex;gap:20px;align-items:flex-start;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+        .modal .modal-img{width:280px;height:180px;border-radius:8px;overflow:hidden;flex:0 0 280px;background:#111}
+        .modal .modal-img img{width:100%;height:100%;object-fit:cover;display:block}
+        .modal .modal-content{flex:1}
+        .modal .modal-content h2{margin:0 0 8px;font-size:28px}
+        .modal .modal-content p{margin:6px 0;color:var(--muted)}
+        .modal .nutrition{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+        .modal .nut-badge{background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:8px;color:var(--muted);font-weight:600}
+        .modal .price{margin-top:14px;font-weight:800;color:var(--accent);font-size:18px}
+        @media (max-width:800px){
+            .modal .box{flex-direction:column}
+            .modal .modal-img{width:100%;height:200px;flex:0 0 auto}
+        }
+        .modal .box h2{margin:0 0 8px}
+        .modal .close{position:absolute;right:18px;top:18px;background:transparent;border:none;color:#fff;font-size:18px}
+        /* search */
+        .search-bar{
+            background:linear-gradient(180deg,#275935,#1f4b2a);padding:16px;border-radius:18px;display:flex;align-items:center;gap:14px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 18px rgba(10,40,20,0.25)
+        }
+        .search-bar input{flex:1;padding:12px 16px;border:none;background:transparent;color:#ecf7ea;font-size:16px;outline:none}
+        .search-icon{opacity:0.95;color:#ecf7ea}
+        .chips-wrap{margin-top:12px;display:flex;align-items:center;gap:8px}
+        .chips-scroller{overflow:hidden;flex:1}
+        .chips{padding:8px 6px;display:flex;gap:12px;white-space:nowrap;overflow-x:auto;scroll-behavior:smooth}
+        .chip{padding:10px 18px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);color:#d7e8d7;cursor:pointer;font-weight:600;letter-spacing:1px}
+        .chip.active{background:rgba(0,0,0,0.18);color:#fff;border-color:rgba(199,161,122,0.25)}
+        .chip-button{background:transparent;border:0;color:#d7e8d7;font-size:20px;width:44px;height:44px;border-radius:8px;cursor:pointer}
+        .chips-wrap{display:flex;align-items:center;gap:8px}
+        .chips-scroller{overflow:hidden;flex:1}
+        .chips{padding:8px 6px;display:flex;gap:10px;white-space:nowrap;overflow-x:auto;scroll-behavior:smooth}
+        .chip{padding:12px 18px;border-radius:14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);}
+        .chip:hover{background:rgba(255,255,255,0.03)}
+        .chip-button{background:transparent;border:0;color:var(--muted);font-size:20px;width:44px;height:44px;border-radius:8px;cursor:pointer}
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">NAM</div>
+        <button id="burger" aria-label="toggle menu" style="display:none;background:transparent;border:none;color:var(--muted);font-size:20px">☰</button>
+        <nav class="nav" id="nav">
+            <a href="#menu" data-target="menu">Меню</a>
+            <a href="#about" data-target="about">Про нас</a>
+            <a href="#contacts" data-target="contacts">Контакти</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div style="max-width:1200px;margin:0 auto;padding:0 16px">
+            <h1>Меню ресторану</h1>
+            <p>Натхнення сучасною кухнею — адаптивний інтерфейс, легке меню та плейсхолдери замість фотографій.</p>
+        </div>
+    </section>
+
+    <!-- search + category chips -->
+    <div class="search-wrap" style="max-width:1200px;margin:20px auto;padding:0 16px">
+        <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input id="searchInput" placeholder="Введіть назву страви" />
+        </div>
+        <div class="chips-wrap" style="margin-top:12px;">
+            <div class="chips-scroller">
+                <div id="chips" class="chips"></div>
+            </div>
+            <button id="chipsNext" class="chip-button">→</button>
+        </div>
+    </div>
+
+    <main id="menu">
+        <div id="categories">завантаження...</div>
+        <section id="about" style="margin-top:48px;padding:28px 0;">
+            <div style="max-width:900px;margin:0 auto;padding:0 16px;text-align:left;color:var(--muted)">
+                <h2 style="color:var(--accent);letter-spacing:1px">Про нас</h2>
+                <p>Ресторан NAM — ідея сучасного перекладу локальної кухні з акцентом на якість інгредієнтів і атмосферу. Це навчальна реалізація інтерфейсу меню без можливості бронювання чи замовлення онлайн.</p>
+                <p>Ця демо‑версія реалізована як частина лабораторної роботи: адаптивний дизайн, адміністрування через просту адмінку, та можливість додавати зображення для позицій.</p>
+            </div>
+        </section>
+    </main>
+
+    <section id="contacts" style="padding:40px 0;background:#0b0b0b;border-top:1px solid rgba(255,255,255,0.02)">
+        <div style="max-width:1000px;margin:0 auto;padding:0 16px;color:var(--muted);display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between">
+            <div style="flex:1 1 320px">
+                <h3 style="color:var(--accent)">Контакти</h3>
+                <p>Адреса: вулиця Прикладна, 1</p>
+                <p>Телефон: +380 44 000 00 00</p>
+                <p>Email: info@example.com</p>
+            </div>
+            <div style="flex:1 1 320px;text-align:right;min-width:260px">
+                <h3 style="color:var(--accent)">Графік</h3>
+                <p>Пн–Нд: 10:00 — 22:00</p>
+                <p>Приходьте — ми раді гостям!</p>
+            </div>
+        </div>
+    </section>
+    </main>
+
+    <footer id="contacts">
+        <div>Адреса: вулиця Прикладна, 1 • Телефон: +380 44 000 00 00</div>
+    </footer>
+
+    <div id="modal" class="modal" onclick="closeModal(event)">
+        <div class="box" role="dialog" aria-modal="true">
+            <button class="close" onclick="closeModal(event)">&times;</button>
+            <div class="modal-img" id="mImg"></div>
+            <div class="modal-content">
+                <h2 id="mTitle"></h2>
+                <p id="mDesc" style="color:var(--muted)"></p>
+                <div id="mNutrition" class="nutrition"></div>
+                <div id="mAllergens" style="color:var(--muted);margin-top:8px"></div>
+                <div id="mPrice" class="price"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function seedImage(seed, w=800, h=600){
+            // picsum seeded image
+            return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
+        }
+
+        // helper to read property in either PascalCase or camelCase or original
+        function getProp(obj, name){
+            if(!obj) return undefined;
+            if(name in obj) return obj[name];
+            const camel = name.charAt(0).toLowerCase() + name.slice(1);
+            if(camel in obj) return obj[camel];
+            const lower = name.toLowerCase();
+            if(lower in obj) return obj[lower];
+            return undefined;
+        }
+
+        function openModal(item){
+            document.getElementById('mTitle').textContent = item.name;
+            document.getElementById('mDesc').textContent = item.description || '';
+            const mImg = document.getElementById('mImg'); mImg.innerHTML = '';
+            if(item.imageUrl){ const img = document.createElement('img'); img.src = item.imageUrl; mImg.appendChild(img); }
+            const mNutrition = document.getElementById('mNutrition'); mNutrition.innerHTML = '';
+            const parts = [];
+            if (item.calories) parts.push(`<div class="nut-badge">Калорії: ${item.calories} ккал</div>`);
+            if (item.protein) parts.push(`<div class="nut-badge">Білки: ${item.protein} г</div>`);
+            if (item.fat) parts.push(`<div class="nut-badge">Жири: ${item.fat} г</div>`);
+            if (item.carbs) parts.push(`<div class="nut-badge">Вуглеводи: ${item.carbs} г</div>`);
+            mNutrition.innerHTML = parts.join('');
+            document.getElementById('mAllergens').textContent = item.allergens ? 'Алергени: ' + item.allergens : '';
+            document.getElementById('mPrice').textContent = item.price ? item.price.toFixed(2) + ' ₴' : '';
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal(e){
+            if(e.target.id === 'modal' || e.target.classList.contains('close')){
+                document.getElementById('modal').style.display = 'none';
+            }
+        }
+
+        async function loadCategories(){
+            const root = document.getElementById('categories');
+            root.innerHTML = '<div style="padding:60px 16px;text-align:center;color:var(--muted)">Завантаження...</div>';
+            try {
+                const res = await fetch('/api/categories');
+                if (!res.ok) {
+                    root.innerHTML = `<div style="padding:60px 16px;text-align:center;color:var(--muted)">Помилка завантаження (${res.status})</div>`;
+                    console.error('Failed to fetch /api/categories', res.statusText);
+                    return;
+                }
+                const data = await res.json();
+                root.innerHTML = '';
+
+                if(!Array.isArray(data) || data.length === 0){
+                    root.innerHTML = '<div style="padding:80px 16px;text-align:center;color:var(--muted)"><h2 style="color:var(--accent)">Меню поки порожнє</h2><p>Поверніться пізніше або додайте позиції через адмінку.</p></div>';
+                return;
+            }
+
+            data.forEach(cat => {
+                const wrap = document.createElement('div');
+                wrap.className = 'category-section';
+
+                const banner = document.createElement('div');
+                banner.className = 'cat-banner';
+                const img = document.createElement('img');
+                // prefer category image if set, otherwise fall back to first menu item image or placeholder
+                const firstImg = getProp(cat,'ImageUrl') || (cat.menuItems && cat.menuItems.length && (getProp(cat.menuItems[0],'ImageUrl') || getProp(cat.menuItems[0],'imageUrl')));
+                img.src = firstImg || seedImage(cat.id || cat.name || Math.random());
+                img.alt = cat.name;
+                banner.appendChild(img);
+                const overlay = document.createElement('div'); overlay.className='overlay'; banner.appendChild(overlay);
+                const title = document.createElement('div'); title.className='cat-title'; title.textContent = cat.name; title.dataset.id = cat.id; banner.appendChild(title);
+
+                const items = document.createElement('div'); items.className = 'items';
+                const list = (cat.menuItems || []);
+                if(list.length === 0){
+                    items.innerHTML = '<p style="color:var(--muted);margin:0">Позицій ще немає</p>';
+                } else {
+                    list.forEach(it => {
+                        const itEl = document.createElement('div'); itEl.className='item';
+                        const thumb = document.createElement('div'); thumb.className='thumb';
+                        const imageUrl = getProp(it,'ImageUrl') || getProp(it,'imageUrl');
+                        const timg = document.createElement('img'); timg.src = imageUrl || seedImage(it.id || getProp(it,'Name') || Math.random(), 160, 120); timg.alt = getProp(it,'Name') || '';
+                        thumb.appendChild(timg);
+                        const left = document.createElement('div'); left.className='item-left';
+                        const h = document.createElement('h3'); h.textContent = getProp(it,'Name') || getProp(it,'name') || ''; left.appendChild(h);
+                        const d = document.createElement('p'); d.className='desc'; d.textContent = getProp(it,'Description') || getProp(it,'description') || ''; left.appendChild(d);
+                        const right = document.createElement('div'); right.className='item-right'; const priceVal = getProp(it,'Price') || getProp(it,'price'); right.textContent = priceVal ? parseFloat(priceVal).toFixed(2) + ' ₴' : '';
+                        itEl.appendChild(thumb);
+                        itEl.appendChild(left);
+                        itEl.appendChild(right);
+                        itEl.style.cursor = 'pointer';
+                        itEl.addEventListener('click', ()=> openModal(it));
+                        items.appendChild(itEl);
+                    });
+                }
+
+                wrap.appendChild(banner);
+                wrap.appendChild(items);
+                root.appendChild(wrap);
+            });
+        // build chips from categories
+        const chips = document.getElementById('chips');
+        chips.innerHTML = '';
+        data.forEach(c=>{
+            const ch = document.createElement('div'); ch.className='chip'; ch.textContent = c.name; ch.onclick = ()=> { document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); ch.classList.add('active'); filterByCategory(c.id); };
+            chips.appendChild(ch);
+        });
+        // next button for chips scroller
+        const next = document.getElementById('chipsNext');
+        next.onclick = ()=>{ const sc = document.querySelector('.chips'); if(sc) sc.scrollBy({left:300,behavior:'smooth'}); };
+            // reveal animation
+            document.querySelectorAll('.category-section').forEach((el,i)=>{
+                setTimeout(()=>el.classList.add('visible'), i*80);
+            });
+            }
+            catch (err) {
+                root.innerHTML = `<div style="padding:60px 16px;text-align:center;color:var(--muted)">Помилка при обробці даних меню</div>`;
+                console.error('loadCategories error', err);
+            }
+        }
+
+        loadCategories();
+
+        // search and chips
+        // debounce helper
+        function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
+
+        document.getElementById('searchInput')?.addEventListener('input', debounce((e)=>{
+            const q = e.target.value.toLowerCase().trim();
+            document.querySelectorAll('.item').forEach(it=>{
+                const name = it.querySelector('h3')?.textContent?.toLowerCase() || '';
+                const desc = it.querySelector('.desc')?.textContent?.toLowerCase() || '';
+                const show = q === '' || name.includes(q) || desc.includes(q);
+                it.style.display = show ? 'flex' : 'none';
+            });
+        }, 180));
+
+        function filterByCategory(catId){
+            // scroll to the category section with matching data-id
+            const sec = Array.from(document.querySelectorAll('.category-section')).find(s=> s.querySelector('.cat-title')?.dataset.id == catId);
+            if(sec) sec.scrollIntoView({behavior:'smooth',block:'start'});
+        }
+
+        // header scroll effect
+        const topbar = document.querySelector('.topbar');
+        window.addEventListener('scroll', ()=>{
+            if(window.scrollY>40) topbar.classList.add('scrolled'); else topbar.classList.remove('scrolled');
+            updateActiveNav();
+        });
+
+        // smooth scroll and active nav
+        document.querySelectorAll('.nav a').forEach(a=>{
+            a.addEventListener('click', e=>{
+                e.preventDefault();
+                const target = a.getAttribute('href').slice(1);
+                const el = document.getElementById(target);
+                if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+            });
+        });
+
+        function updateActiveNav(){
+            const sections = ['menu','about','contacts'];
+            let current = 'menu';
+            const y = window.scrollY + 120;
+            for(const s of sections){
+                const el = document.getElementById(s);
+                if(el && el.offsetTop <= y) current = s;
+            }
+            document.querySelectorAll('.nav a').forEach(a=> a.classList.toggle('active', a.getAttribute('href').slice(1)===current));
+        }
+
+        // burger for mobile
+        const burger = document.getElementById('burger');
+        const nav = document.getElementById('nav');
+        function checkMobile(){
+            if(window.innerWidth < 780){ burger.style.display='block'; nav.style.display='none'; } else { burger.style.display='none'; nav.style.display='block'; }
+        }
+        burger?.addEventListener('click', ()=>{ nav.style.display = nav.style.display === 'block' ? 'none' : 'block'; });
+        window.addEventListener('resize', checkMobile);
+        checkMobile();
+    </script>
+</body>
+</html>

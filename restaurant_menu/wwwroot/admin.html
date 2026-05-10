@@ -1,0 +1,468 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>NAM Admin</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #fff;
+            font-family: sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #c7a17a;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        h2 {
+            color: #c7a17a;
+            font-weight: normal;
+        }
+
+        .admin-container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: #222;
+            padding: 30px;
+            border: 1px solid #c7a17a;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        input {
+            width: 90%;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+            border: 1px solid #c7a17a;
+            background: #333;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        button {
+            width: 95%;
+            padding: 12px;
+            background: #c7a17a;
+            color: #111;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+            button:hover {
+                background: #e0b98f;
+            }
+
+        .error {
+            color: #ff4d4d;
+            margin-top: 15px;
+        }
+
+        .success {
+            color: #4CAF50;
+            margin-top: 15px;
+        }
+        /* categories list styles */
+        #categoriesList{max-width:900px;margin:12px auto;color:#fff}
+        .category-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .category-left{display:flex;align-items:center;gap:12px}
+        .category-thumb{width:64px;height:48px;border-radius:6px;background:#222;overflow:hidden;flex:0 0 64px}
+        .category-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+        .category-name{font-size:16px;color:#fff}
+        .category-actions{display:flex;gap:8px}
+        .category-actions button{background:#c7a17a;color:#111;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:700}
+        .category-actions button.delete{background:#a84f3a;color:#fff}
+        /* items list styles */
+        #itemsList{max-width:900px;margin:12px auto;color:#fff}
+        .item-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .item-left{display:flex;align-items:center;gap:12px}
+        .item-thumb{width:72px;height:56px;border-radius:8px;background:#222;overflow:hidden;flex:0 0 72px}
+        .item-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+        .item-meta{display:flex;flex-direction:column}
+        .item-name{font-size:16px;color:#fff}
+        .item-desc{color:var(--muted);font-size:13px}
+        .item-actions{display:flex;gap:8px}
+        .item-actions button{background:#c7a17a;color:#111;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:700}
+        .item-actions button.delete{background:#a84f3a;color:#fff}
+    </style>
+</head>
+<body>
+    <div id="login" class="admin-container">
+        <h1>Вхід до адмінки</h1>
+        <h2>Авторизація</h2>
+        <input type="password" id="adminPass" placeholder="Пароль" />
+        <button onclick="login()">Увійти</button>
+        <div id="loginMsg"></div>
+    </div>
+
+    <div id="content" style="display:none;">
+        <h1>Секретна адмінка</h1>
+        <div class="admin-container">
+            <h2>Додати нову категорію</h2>
+            <input type="text" id="catName" placeholder="Назва категорії (напр. Суші)" />
+            <input type="file" id="catImage" accept="image/*" />
+            <button onclick="addCategory()">Додати в меню</button>
+            <div id="msg"></div>
+        </div>
+        <div class="admin-container" style="max-width:900px;">
+            <h3>Існуючі категорії</h3>
+            <div id="categoriesList"></div>
+        </div>
+        <div class="admin-container" style="max-width:900px;">
+            <h2>Керування позиціями</h2>
+            <div style="text-align:left; margin-bottom:10px;">
+                <label>Категорія:</label>
+                <select id="catSelect"></select>
+            </div>
+            <input type="text" id="itemName" placeholder="Назва позиції" />
+            <input type="text" id="itemDesc" placeholder="Опис" />
+            <input type="number" id="itemPrice" placeholder="Ціна" />
+            <input type="number" id="itemCalories" placeholder="Калорії (ккал)" />
+            <div style="display:flex;gap:8px;">
+                <input type="number" id="itemProtein" placeholder="Білки (г)" />
+                <input type="number" id="itemFat" placeholder="Жири (г)" />
+                <input type="number" id="itemCarbs" placeholder="Вуглеводи (г)" />
+            </div>
+            <input type="text" id="itemAllergens" placeholder="Алергени (через коми)" />
+            <input type="file" id="itemImage" accept="image/*" />
+            <button onclick="addItem()">Додати позицію</button>
+            <div id="itemMsg"></div>
+
+            <h3 id="itemsToggle" style="margin-top:18px;cursor:pointer;user-select:none;">Існуючі позиції ▾</h3>
+            <div id="itemsList" style="display:none"></div>
+        </div>
+    </div>
+
+    <script>
+        let adminPass = null;
+        let _catPollId = null;
+
+        async function login() {
+            const pass = document.getElementById('adminPass').value;
+            const msgDiv = document.getElementById('loginMsg');
+            msgDiv.innerHTML = '';
+
+            try {
+                const resp = await fetch('/api/categories/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pass: pass })
+                });
+
+                if (resp.ok) {
+                    adminPass = pass;
+                    document.getElementById('login').style.display = 'none';
+                    document.getElementById('content').style.display = 'block';
+            loadCategoriesList();
+            loadItems();
+                    // start polling categories so select updates in (near) real-time
+                    if (!_catPollId) _catPollId = setInterval(loadCategoriesList, 3000);
+                } else {
+                    const txt = await resp.text();
+                    msgDiv.innerHTML = `<p class="error">${txt || 'невірний пароль'}</p>`;
+                }
+            } catch (e) {
+                msgDiv.innerHTML = `<p class="error">Помилка з'єднання</p>`;
+            }
+        }
+
+        async function addCategory() {
+            const name = document.getElementById('catName').value;
+            const msgDiv = document.getElementById('msg');
+            msgDiv.innerHTML = '';
+
+            if (!adminPass) {
+                msgDiv.innerHTML = '<p class="error">Спочатку увійдіть.</p>';
+                return;
+            }
+            const file = document.getElementById('catImage').files[0];
+            let imageUrl = null;
+            if(file){
+                const base = await toBase64(file);
+                const up = await fetch('/api/categories/upload', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Admin-Pass': adminPass }, body: JSON.stringify({ imageBase64: base.split(',')[1] }) });
+                if(up.ok){ const j = await up.json(); imageUrl = j.url; }
+            }
+
+            const response = await fetch('/api/categories', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Admin-Pass': adminPass },
+                body: JSON.stringify({ name: name, imageUrl: imageUrl })
+            });
+
+            if (response.ok) {
+                // server returns created category; refresh category list so select updates in real time
+                let created = null;
+                try { created = await response.json(); } catch {}
+                msgDiv.innerHTML = '<p class="success">Категорію успішно додано</p>';
+                document.getElementById('catName').value = '';
+                await loadCategoriesList();
+                // if server returned created category, select it
+                if (created && created.id) {
+                    const sel = document.getElementById('catSelect');
+                    if (sel) sel.value = created.id;
+                }
+            } else {
+                if (response.status === 409) {
+                    try {
+                        const j = await response.json();
+                        // store last attempted name/image so merge/replace can reuse
+                        window._lastCategoryAttempt = { name: name, imageUrl: imageUrl };
+                        msgDiv.innerHTML = `<p class="error">${j.message}</p>
+                            <p>
+                                <button id="replaceBtn">Заміна існуючої категорії</button>
+                                <button id="mergeBtn" style="margin-left:10px">Створити нову та перемістити позиції</button>
+                                <button id="editBtn" style="margin-left:10px">Редагувати існуючу</button>
+                            </p>`;
+                        document.getElementById('replaceBtn').onclick = ()=> replaceCategory(j.existingId);
+                        document.getElementById('mergeBtn').onclick = ()=> mergeCategory(j.existingId);
+                        document.getElementById('editBtn').onclick = ()=> editCategory(j.existingId);
+                    } catch {
+                        const errorText = await response.text();
+                        msgDiv.innerHTML = `<p class="error">${errorText}</p>`;
+                    }
+                } else {
+                    const errorText = await response.text();
+                    msgDiv.innerHTML = `<p class="error">${errorText}</p>`;
+                }
+            }
+        }
+    </script>
+
+    <script>
+        async function replaceCategory(existingId){
+            if(!adminPass) return alert('Увійдіть');
+            const attempt = window._lastCategoryAttempt || { name: document.getElementById('catName').value, imageUrl: null };
+            const body = { id: existingId, name: attempt.name, imageUrl: attempt.imageUrl };
+            const resp = await fetch('/api/categories/' + existingId, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Admin-Pass': adminPass }, body: JSON.stringify(body) });
+            const msgDiv = document.getElementById('msg');
+            if(resp.ok){ msgDiv.innerHTML = '<p class="success">Категорію оновлено (замінено)</p>'; await loadCategoriesList(); }
+            else { const t = await resp.text(); msgDiv.innerHTML = `<p class="error">${t}</p>`; }
+        }
+
+        async function mergeCategory(existingId){
+            if(!adminPass) return alert('Увійдіть');
+            const attempt = window._lastCategoryAttempt || { name: document.getElementById('catName').value, imageUrl: null };
+            const body = { existingId: existingId, replaceExisting: false, newName: attempt.name, newImageUrl: attempt.imageUrl };
+            const resp = await fetch('/api/categories/merge', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Admin-Pass': adminPass }, body: JSON.stringify(body) });
+            const msgDiv = document.getElementById('msg');
+            if(resp.ok){ const j = await resp.json(); msgDiv.innerHTML = `<p class="success">Категорії об'єднано. Нова id: ${j.newId}</p>`; await loadCategoriesList(); loadItems(); }
+            else { const t = await resp.text(); msgDiv.innerHTML = `<p class="error">${t}</p>`; }
+        }
+    </script>
+
+    <script>
+        async function loadCategoriesList(){
+            const resp = await fetch('/api/categories');
+            const data = await resp.json();
+            const sel = document.getElementById('catSelect');
+            const prev = sel.value;
+            sel.innerHTML = '';
+            data.forEach(c=>{
+                const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name; sel.appendChild(opt);
+            });
+            // try to restore previous selection if possible
+            if (prev) {
+                const exists = Array.from(sel.options).some(o => o.value === prev);
+                if (exists) sel.value = prev;
+            }
+            // populate categories list with delete buttons and preview images
+            const list = document.getElementById('categoriesList');
+            if(list){
+                list.innerHTML = '';
+                data.forEach(c=>{
+                    const el = document.createElement('div'); el.className='category-row';
+                    const left = document.createElement('div'); left.className='category-left';
+                    const thumb = document.createElement('div'); thumb.className='category-thumb';
+                    if(c.imageUrl){ const img=document.createElement('img'); img.src=c.imageUrl; thumb.appendChild(img); }
+                    const name = document.createElement('div'); name.className='category-name'; name.textContent = c.name;
+                    left.appendChild(thumb); left.appendChild(name);
+                    const btns = document.createElement('div'); btns.className='category-actions';
+                    const edit = document.createElement('button'); edit.textContent='Редагувати'; edit.onclick = ()=> editCategory(c.id);
+                    const del = document.createElement('button'); del.textContent='Видалити'; del.className='delete'; del.onclick = async ()=>{ if(!confirm('Видалити категорію? Всі її позиції також будуть видалені.')) return; const r = await fetch('/api/categories/'+c.id, { method: 'DELETE', headers: { 'Admin-Pass': adminPass } }); if(r.ok){ await loadCategoriesList(); loadItems(); } else { alert('Не вдалось видалити'); } };
+                    btns.appendChild(edit); btns.appendChild(del);
+                    el.appendChild(left); el.appendChild(btns);
+                    list.appendChild(el);
+                });
+            }
+        }
+
+        async function editCategory(id){
+            // load category and put values into create form for editing
+            const r = await fetch('/api/categories/' + id);
+            if(!r.ok) return alert('Категорія не знайдена');
+            const c = await r.json();
+            document.getElementById('catName').value = c.name;
+            // indicate edit mode via data attribute
+            document.getElementById('catName').dataset.editId = c.id;
+            document.getElementById('msg').innerHTML = '<p class="success">Редагуємо категорію #' + c.id + '</p>';
+        }
+
+        // when saving category, if editId is present, perform PUT instead of POST
+        const origAddCategory = addCategory;
+        async function saveCategory(){
+            const editId = document.getElementById('catName').dataset.editId;
+            if(editId){
+                const name = document.getElementById('catName').value;
+                const file = document.getElementById('catImage').files[0];
+                let imageUrl = null;
+                if(file){ const base = await toBase64(file); const up = await fetch('/api/categories/upload', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Admin-Pass': adminPass }, body: JSON.stringify({ imageBase64: base.split(',')[1] }) }); if(up.ok){ const j = await up.json(); imageUrl = j.url; } }
+                const resp = await fetch('/api/categories/' + editId, { method: 'PUT', headers: { 'Content-Type':'application/json','Admin-Pass': adminPass }, body: JSON.stringify({ id: parseInt(editId), name: name, imageUrl: imageUrl }) });
+                if(resp.ok){ document.getElementById('msg').innerHTML = '<p class="success">Категорію оновлено</p>'; delete document.getElementById('catName').dataset.editId; document.getElementById('catName').value=''; document.getElementById('catImage').value=''; await loadCategoriesList(); }
+                else{ const t = await resp.text(); document.getElementById('msg').innerHTML = `<p class="error">${t}</p>` }
+            } else {
+                await origAddCategory();
+            }
+        }
+        // replace button handler
+        document.querySelector('button[onclick="addCategory()"]')?.setAttribute('onclick','saveCategory()');
+
+        async function addItem(){
+            if(!adminPass){ document.getElementById('itemMsg').innerHTML = '<p class="error">Спочатку увійдіть.</p>'; return; }
+            const name = document.getElementById('itemName').value;
+            const desc = document.getElementById('itemDesc').value;
+            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+            const calories = parseInt(document.getElementById('itemCalories').value) || null;
+            const protein = parseFloat(document.getElementById('itemProtein').value) || null;
+            const fat = parseFloat(document.getElementById('itemFat').value) || null;
+            const carbs = parseFloat(document.getElementById('itemCarbs').value) || null;
+            const allergens = document.getElementById('itemAllergens').value || null;
+            const catId = parseInt(document.getElementById('catSelect').value);
+            const file = document.getElementById('itemImage').files[0];
+
+            // client-side validation
+            const msgEl = document.getElementById('itemMsg'); msgEl.innerHTML = '';
+            if (!name || name.trim().length === 0) { msgEl.innerHTML = '<p class="error">Назва позиції обов\'язкова.</p>'; return; }
+            if (price < 0 || price > 100000) { msgEl.innerHTML = '<p class="error">Ціна повинна бути в діапазоні 0–100000.</p>'; return; }
+            if (calories !== null && calories < 0) { msgEl.innerHTML = '<p class="error">Калорії не можуть бути від\'ємними.</p>'; return; }
+            if (protein !== null && protein < 0) { msgEl.innerHTML = '<p class="error">Білки не можуть бути від\'ємними.</p>'; return; }
+            if (fat !== null && fat < 0) { msgEl.innerHTML = '<p class="error">Жири не можуть бути від\'ємними.</p>'; return; }
+            if (carbs !== null && carbs < 0) { msgEl.innerHTML = '<p class="error">Вуглеводи не можуть бути від\'ємними.</p>'; return; }
+
+            let imageUrl = null;
+            if(file){
+                const base = await toBase64(file);
+                const up = await fetch('/api/menuitems/upload', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Admin-Pass': adminPass },
+                    body: JSON.stringify({ imageBase64: base.split(',')[1] })
+                });
+                if(up.ok){ const j = await up.json(); imageUrl = j.url; }
+            }
+
+            const editId = document.getElementById('itemName').dataset.editId;
+            let resp;
+            if (editId) {
+                // Update existing
+                resp = await fetch('/api/menuitems/' + editId, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json', 'Admin-Pass': adminPass },
+                    body: JSON.stringify({ id: parseInt(editId), name: name, description: desc, price: price, categoryId: catId, imageUrl: imageUrl, calories: calories, protein: protein, fat: fat, carbs: carbs, allergens: allergens })
+                });
+            } else {
+                resp = await fetch('/api/menuitems', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Admin-Pass': adminPass },
+                    body: JSON.stringify({ name: name, description: desc, price: price, categoryId: catId, imageUrl: imageUrl, calories: calories, protein: protein, fat: fat, carbs: carbs, allergens: allergens })
+                });
+            }
+
+            if(resp.ok){
+                document.getElementById('itemMsg').innerHTML = '<p class="success">Позицію додано</p>';
+                document.getElementById('itemName').value=''; document.getElementById('itemDesc').value=''; document.getElementById('itemPrice').value=''; document.getElementById('itemImage').value='';
+                document.getElementById('itemCalories').value=''; document.getElementById('itemProtein').value=''; document.getElementById('itemFat').value=''; document.getElementById('itemCarbs').value=''; document.getElementById('itemAllergens').value='';
+                delete document.getElementById('itemName').dataset.editId;
+                loadItems();
+            } else {
+                // try to parse ProblemDetails or validation errors
+                let text;
+                try {
+                    const j = await resp.json();
+                    if (j && j.errors) {
+                        // format errors object
+                        const parts = [];
+                        for (const k in j.errors) {
+                            if (Array.isArray(j.errors[k])) parts.push(j.errors[k].join(' '));
+                            else parts.push(j.errors[k]);
+                        }
+                        text = parts.join(' ');
+                    } else if (j && j.title) {
+                        text = j.title + (j.detail ? (': ' + j.detail) : '');
+                    } else {
+                        text = JSON.stringify(j);
+                    }
+                } catch (e) {
+                    text = await resp.text();
+                }
+                document.getElementById('itemMsg').innerHTML = `<p class="error">${text}</p>`;
+            }
+        }
+
+        function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(); r.readAsDataURL(file); }); }
+
+        async function editItem(id){
+            // load item into form for editing
+            const r = await fetch('/api/menuitems/' + id);
+            if (!r.ok) return alert('Не знайдено');
+            const it = await r.json();
+            document.getElementById('itemName').value = it.name;
+            document.getElementById('itemDesc').value = it.description || '';
+            document.getElementById('itemPrice').value = it.price || '';
+            document.getElementById('itemCalories').value = it.calories || '';
+            document.getElementById('itemProtein').value = it.protein || '';
+            document.getElementById('itemFat').value = it.fat || '';
+            document.getElementById('itemCarbs').value = it.carbs || '';
+            document.getElementById('itemAllergens').value = it.allergens || '';
+            document.getElementById('catSelect').value = it.categoryId;
+            // set a data attribute to indicate edit mode
+            document.getElementById('itemName').dataset.editId = it.id;
+            document.getElementById('itemMsg').innerHTML = '<p class="success">Редагуємо позицію #' + it.id + '</p>';
+        }
+
+        async function loadItems(){
+            const resp = await fetch('/api/menuitems');
+            const data = await resp.json();
+            const list = document.getElementById('itemsList'); list.innerHTML = '';
+            // ensure items list is visible when loading
+            const itemsToggle = document.getElementById('itemsToggle');
+            if (itemsToggle && list.style.display === 'none') list.style.display = 'block';
+            data.forEach(it=>{
+                const el = document.createElement('div'); el.className='item-row';
+                const left = document.createElement('div'); left.className='item-left';
+                const thumb = document.createElement('div'); thumb.className='item-thumb'; if(it.imageUrl){ const img=document.createElement('img'); img.src = it.imageUrl; thumb.appendChild(img); }
+                const meta = document.createElement('div'); meta.className='item-meta';
+                const name = document.createElement('div'); name.className='item-name'; name.textContent = it.name;
+                const desc = document.createElement('div'); desc.className='item-desc'; desc.textContent = it.description || '';
+                meta.appendChild(name); meta.appendChild(desc);
+                left.appendChild(thumb); left.appendChild(meta);
+                const actions = document.createElement('div'); actions.className='item-actions';
+                const editBtn = document.createElement('button'); editBtn.textContent='Редагувати'; editBtn.onclick = ()=> editItem(it.id);
+                const delBtn = document.createElement('button'); delBtn.textContent='Видалити'; delBtn.className='delete'; delBtn.onclick = async ()=>{ if(!confirm('Видалити позицію?')) return; const r = await fetch('/api/menuitems/' + it.id, { method:'DELETE', headers: { 'Admin-Pass': adminPass } }); if(r.ok) loadItems(); else alert('Не вдалось'); };
+                actions.appendChild(editBtn); actions.appendChild(delBtn);
+                el.appendChild(left); el.appendChild(actions);
+                list.appendChild(el);
+            });
+        }
+
+        // toggle items list visibility when clicking heading
+        document.getElementById('itemsToggle')?.addEventListener('click', ()=>{
+            const list = document.getElementById('itemsList');
+            if (!list) return;
+            if (list.style.display === 'none') { list.style.display = 'block'; document.getElementById('itemsToggle').textContent = 'Існуючі позиції ▾'; }
+            else { list.style.display = 'none'; document.getElementById('itemsToggle').textContent = 'Існуючі позиції ▸'; }
+        });
+
+        async function deleteItem(id){
+            if(!confirm('Впевнені?')) return;
+            const resp = await fetch('/api/menuitems/' + id, { method: 'DELETE', headers: { 'Admin-Pass': adminPass } });
+            if(resp.ok) loadItems(); else alert('Не вдалося видалити');
+        }
+    </script>
+</body>
+</html>
