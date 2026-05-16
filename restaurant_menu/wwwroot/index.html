@@ -75,13 +75,13 @@
         .search-icon{opacity:0.95;color:#ecf7ea}
         .chips-wrap{margin-top:12px;display:flex;align-items:center;gap:8px}
         .chips-scroller{overflow:hidden;flex:1}
-        .chips{padding:8px 6px;display:flex;gap:12px;white-space:nowrap;overflow-x:auto;scroll-behavior:smooth}
+        .chips{padding:8px 6px;display:flex;gap:12px;flex-wrap:wrap;white-space:normal;overflow:visible}
         .chip{padding:10px 18px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);color:#d7e8d7;cursor:pointer;font-weight:600;letter-spacing:1px}
         .chip.active{background:rgba(0,0,0,0.18);color:#fff;border-color:rgba(199,161,122,0.25)}
         .chip-button{background:transparent;border:0;color:#d7e8d7;font-size:20px;width:44px;height:44px;border-radius:8px;cursor:pointer}
         .chips-wrap{display:flex;align-items:center;gap:8px}
         .chips-scroller{overflow:hidden;flex:1}
-        .chips{padding:8px 6px;display:flex;gap:10px;white-space:nowrap;overflow-x:auto;scroll-behavior:smooth}
+        .chips{padding:8px 6px;display:flex;gap:10px;flex-wrap:wrap;white-space:normal;overflow:visible}
         .chip{padding:12px 18px;border-radius:14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);}
         .chip:hover{background:rgba(255,255,255,0.03)}
         .chip-button{background:transparent;border:0;color:var(--muted);font-size:20px;width:44px;height:44px;border-radius:8px;cursor:pointer}
@@ -228,7 +228,7 @@
                 banner.className = 'cat-banner';
                 const img = document.createElement('img');
                 const firstImg = getProp(cat,'ImageUrl') || (cat.menuItems && cat.menuItems.length && (getProp(cat.menuItems[0],'ImageUrl') || getProp(cat.menuItems[0],'imageUrl')));
-                img.src = firstImg || seedImage(cat.id || cat.name || Math.random());
+                img.src = firstImg || '/images/default-cat.svg';
                 img.alt = cat.name;
                 banner.appendChild(img);
                 const overlay = document.createElement('div'); overlay.className='overlay'; banner.appendChild(overlay);
@@ -268,8 +268,9 @@
             const ch = document.createElement('div'); ch.className='chip'; ch.textContent = c.name; ch.onclick = ()=> { document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); ch.classList.add('active'); filterByCategory(c.id); };
             chips.appendChild(ch);
         });
+        // hide chips next button and allow wrapping on multiple rows
         const next = document.getElementById('chipsNext');
-        next.onclick = ()=>{ const sc = document.querySelector('.chips'); if(sc) sc.scrollBy({left:300,behavior:'smooth'}); };
+        if(next) next.style.display = 'none';
             document.querySelectorAll('.category-section').forEach((el,i)=>{
                 setTimeout(()=>el.classList.add('visible'), i*80);
             });

@@ -43,10 +43,35 @@
             background: #333;
             color: #fff;
             font-size: 16px;
+            height: 44px;
+            box-sizing: border-box;
+        }
+
+        .inline-inputs {
+            display: flex;
+            gap: 8px;
+            margin: 15px 0;
+            width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+            align-items: stretch;
+        }
+
+        .inline-inputs input {
+            flex: 1;
+            width: 100%;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #c7a17a;
+            background: #333;
+            color: #fff;
+            font-size: 16px;
+            margin: 0;
+            height: 44px;
+            box-sizing: border-box;
         }
 
         button {
-            width: 95%;
             padding: 12px;
             background: #c7a17a;
             color: #111;
@@ -59,9 +84,19 @@
             transition: 0.3s;
         }
 
-            button:hover {
-                background: #e0b98f;
-            }
+        .primary {
+            display: block;
+            width: 90%;
+            margin: 12px auto;
+            height: 44px;
+            box-sizing: border-box;
+        }
+
+        .alt-actions{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:12px}
+        .alt-btn{background:#c7a17a;color:#111;border:none;padding:12px 18px;border-radius:8px;cursor:pointer;font-weight:700;display:block;width:90%;max-width:420px;box-sizing:border-box;text-align:center}
+        .alt-btn:hover{background:#e0b98f}
+
+        button:hover { background: #e0b98f; }
 
         .error {
             color: #ff4d4d;
@@ -101,17 +136,17 @@
         <h1>Вхід до адмінки</h1>
         <h2>Авторизація</h2>
         <input type="password" id="adminPass" placeholder="Пароль" />
-        <button onclick="login()">Увійти</button>
+        <button class="primary" onclick="login()">Увійти</button>
         <div id="loginMsg"></div>
     </div>
 
     <div id="content" style="display:none;">
-        <h1>Секретна адмінка</h1>
+        <h1>Адмінка</h1>
         <div class="admin-container">
             <h2>Додати нову категорію</h2>
             <input type="text" id="catName" placeholder="Назва категорії (напр. Суші)" />
             <input type="file" id="catImage" accept="image/*" />
-            <button onclick="addCategory()">Додати в меню</button>
+            <button class="primary" onclick="addCategory()">Зберегти</button>
             <div id="msg"></div>
         </div>
         <div class="admin-container" style="max-width:900px;">
@@ -128,14 +163,14 @@
             <input type="text" id="itemDesc" placeholder="Опис" />
             <input type="number" id="itemPrice" placeholder="Ціна" />
             <input type="number" id="itemCalories" placeholder="Калорії (ккал)" />
-            <div style="display:flex;gap:8px;">
+            <div class="inline-inputs">
                 <input type="number" id="itemProtein" placeholder="Білки (г)" />
                 <input type="number" id="itemFat" placeholder="Жири (г)" />
                 <input type="number" id="itemCarbs" placeholder="Вуглеводи (г)" />
             </div>
             <input type="text" id="itemAllergens" placeholder="Алергени (через коми)" />
             <input type="file" id="itemImage" accept="image/*" />
-            <button onclick="addItem()">Додати позицію</button>
+            <button class="primary" onclick="addItem()">Зберегти</button>
             <div id="itemMsg"></div>
 
             <h3 id="itemsToggle" style="margin-top:18px;cursor:pointer;user-select:none;">Існуючі позиції ▾</h3>
@@ -146,6 +181,26 @@
     <script>
         let adminPass = null;
         let _catPollId = null;
+
+        async function getErrorText(resp){
+            try{
+                const j = await resp.json();
+                if(!j) return await resp.text();
+                if (j.errors){
+                    const parts = [];
+                    for (const k in j.errors){
+                        if (Array.isArray(j.errors[k])) parts.push(j.errors[k].join(' '));
+                        else parts.push(j.errors[k]);
+                    }
+                    return parts.join(' ');
+                }
+                if (j.message) return j.message;
+                if (j.title) return j.title + (j.detail? (': '+j.detail):'');
+                return JSON.stringify(j);
+            }catch(e){
+                try{ return await resp.text(); }catch{ return 'Server error'; }
+            }
+        }
 
         async function login() {
             const pass = document.getElementById('adminPass').value;
@@ -215,24 +270,23 @@
                 if (response.status === 409) {
                     try {
                         const j = await response.json();
-                        // store last attempted name/image so merge/replace can reuse
                         window._lastCategoryAttempt = { name: name, imageUrl: imageUrl };
                         msgDiv.innerHTML = `<p class="error">${j.message}</p>
-                            <p>
-                                <button id="replaceBtn">Заміна існуючої категорії</button>
-                                <button id="mergeBtn" style="margin-left:10px">Створити нову та перемістити позиції</button>
-                                <button id="editBtn" style="margin-left:10px">Редагувати існуючу</button>
-                            </p>`;
+                            <div class="alt-actions">
+                                <button id="replaceBtn" class="alt-btn">Заміна існуючої категорії</button>
+                                <button id="mergeBtn" class="alt-btn">Створити нову та перемістити позиції</button>
+                                <button id="editBtn" class="alt-btn">Редагувати існуючу</button>
+                            </div>`;
                         document.getElementById('replaceBtn').onclick = ()=> replaceCategory(j.existingId);
                         document.getElementById('mergeBtn').onclick = ()=> mergeCategory(j.existingId);
                         document.getElementById('editBtn').onclick = ()=> editCategory(j.existingId);
                     } catch {
-                        const errorText = await response.text();
-                        msgDiv.innerHTML = `<p class="error">${errorText}</p>`;
+                        const t = await getErrorText(response);
+                        msgDiv.innerHTML = `<p class="error">${t}</p>`;
                     }
                 } else {
-                    const errorText = await response.text();
-                    msgDiv.innerHTML = `<p class="error">${errorText}</p>`;
+                    const t = await getErrorText(response);
+                    msgDiv.innerHTML = `<p class="error">${t}</p>`;
                 }
             }
         }
@@ -288,7 +342,7 @@
                     left.appendChild(thumb); left.appendChild(name);
                     const btns = document.createElement('div'); btns.className='category-actions';
                     const edit = document.createElement('button'); edit.textContent='Редагувати'; edit.onclick = ()=> editCategory(c.id);
-                    const del = document.createElement('button'); del.textContent='Видалити'; del.className='delete'; del.onclick = async ()=>{ if(!confirm('Видалити категорію? Всі її позиції також будуть видалені.')) return; const r = await fetch('/api/categories/'+c.id, { method: 'DELETE', headers: { 'Admin-Pass': adminPass } }); if(r.ok){ await loadCategoriesList(); loadItems(); } else { alert('Не вдалось видалити'); } };
+                    const del = document.createElement('button'); del.textContent='Видалити'; del.className='delete'; del.onclick = ()=> deleteCategory(c.id);
                     btns.appendChild(edit); btns.appendChild(del);
                     el.appendChild(left); el.appendChild(btns);
                     list.appendChild(el);
@@ -398,7 +452,7 @@
                         text = JSON.stringify(j);
                     }
                 } catch (e) {
-                    text = await resp.text();
+                    text = await getErrorText(resp);
                 }
                 document.getElementById('itemMsg').innerHTML = `<p class="error">${text}</p>`;
             }
@@ -443,7 +497,7 @@
                 left.appendChild(thumb); left.appendChild(meta);
                 const actions = document.createElement('div'); actions.className='item-actions';
                 const editBtn = document.createElement('button'); editBtn.textContent='Редагувати'; editBtn.onclick = ()=> editItem(it.id);
-                const delBtn = document.createElement('button'); delBtn.textContent='Видалити'; delBtn.className='delete'; delBtn.onclick = async ()=>{ if(!confirm('Видалити позицію?')) return; const r = await fetch('/api/menuitems/' + it.id, { method:'DELETE', headers: { 'Admin-Pass': adminPass } }); if(r.ok) loadItems(); else alert('Не вдалось'); };
+                const delBtn = document.createElement('button'); delBtn.textContent='Видалити'; delBtn.className='delete'; delBtn.onclick = ()=> deleteItem(it.id);
                 actions.appendChild(editBtn); actions.appendChild(delBtn);
                 el.appendChild(left); el.appendChild(actions);
                 list.appendChild(el);
@@ -461,7 +515,41 @@
         async function deleteItem(id){
             if(!confirm('Впевнені?')) return;
             const resp = await fetch('/api/menuitems/' + id, { method: 'DELETE', headers: { 'Admin-Pass': adminPass } });
-            if(resp.ok) loadItems(); else alert('Не вдалося видалити');
+            if(resp.ok) {
+                const editEl = document.getElementById('itemName');
+                if(editEl && editEl.dataset.editId && editEl.dataset.editId == String(id)){
+                    editEl.value = '';
+                    document.getElementById('itemDesc').value = '';
+                    document.getElementById('itemPrice').value = '';
+                    document.getElementById('itemCalories').value = '';
+                    document.getElementById('itemProtein').value = '';
+                    document.getElementById('itemFat').value = '';
+                    document.getElementById('itemCarbs').value = '';
+                    document.getElementById('itemAllergens').value = '';
+                    delete editEl.dataset.editId;
+                    document.getElementById('itemMsg').innerHTML = '<p class="success">Редагування скасовано — позицію видалено</p>';
+                }
+                await loadItems();
+            } else {
+                alert('Не вдалося видалити');
+            }
+        }
+
+        async function deleteCategory(id){
+            if(!confirm('Видалити категорію? Всі її позиції також будуть видалені.')) return;
+            const resp = await fetch('/api/categories/' + id, { method: 'DELETE', headers: { 'Admin-Pass': adminPass } });
+            if(resp.ok) {
+                const editEl = document.getElementById('catName');
+                if(editEl && editEl.dataset.editId && editEl.dataset.editId == String(id)){
+                    editEl.value = '';
+                    delete editEl.dataset.editId;
+                    document.getElementById('msg').innerHTML = '<p class="success">Редагування скасовано — категорію видалено</p>';
+                }
+                await loadCategoriesList();
+                loadItems();
+            } else {
+                alert('Не вдалось видалити');
+            }
         }
     </script>
 </body>
