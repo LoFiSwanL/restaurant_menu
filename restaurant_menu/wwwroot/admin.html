@@ -214,7 +214,7 @@
                     body: JSON.stringify({ pass: pass })
                 });
 
-                if (resp.ok) {
+            if (response.ok) {
                     adminPass = pass;
                     document.getElementById('login').style.display = 'none';
                     document.getElementById('content').style.display = 'block';
@@ -434,12 +434,10 @@
                 delete document.getElementById('itemName').dataset.editId;
                 loadItems();
             } else {
-                // try to parse ProblemDetails or validation errors
                 let text;
                 try {
                     const j = await resp.json();
                     if (j && j.errors) {
-                        // format errors object
                         const parts = [];
                         for (const k in j.errors) {
                             if (Array.isArray(j.errors[k])) parts.push(j.errors[k].join(' '));
