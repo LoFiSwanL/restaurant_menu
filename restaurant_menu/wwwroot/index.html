@@ -280,7 +280,6 @@
             const ch = document.createElement('div'); ch.className='chip'; ch.textContent = c.name; ch.onclick = ()=> { document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); ch.classList.add('active'); filterByCategory(c.id); };
             chips.appendChild(ch);
         });
-        // hide chips next button and allow wrapping on multiple rows
         const next = document.getElementById('chipsNext');
         if(next) next.style.display = 'none';
             document.querySelectorAll('.category-section').forEach((el,i)=>{

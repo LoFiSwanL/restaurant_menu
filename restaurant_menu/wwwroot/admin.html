@@ -107,7 +107,6 @@
             color: #4CAF50;
             margin-top: 15px;
         }
-        /* categories list styles */
         #categoriesList{max-width:900px;margin:12px auto;color:#fff}
         .category-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.03)}
         .category-left{display:flex;align-items:center;gap:12px}
@@ -117,7 +116,6 @@
         .category-actions{display:flex;gap:8px}
         .category-actions button{background:#c7a17a;color:#111;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:700}
         .category-actions button.delete{background:#a84f3a;color:#fff}
-        /* items list styles */
         #itemsList{max-width:900px;margin:12px auto;color:#fff}
         .item-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.03)}
         .item-left{display:flex;align-items:center;gap:12px}
@@ -214,13 +212,12 @@
                     body: JSON.stringify({ pass: pass })
                 });
 
-            if (response.ok) {
+            if (resp.ok) {
                     adminPass = pass;
                     document.getElementById('login').style.display = 'none';
                     document.getElementById('content').style.display = 'block';
             loadCategoriesList();
             loadItems();
-                    // start polling categories so select updates in (near) real-time
                     if (!_catPollId) _catPollId = setInterval(loadCategoriesList, 3000);
                 } else {
                     const txt = await resp.text();
@@ -255,13 +252,11 @@
             });
 
             if (response.ok) {
-                // server returns created category; refresh category list so select updates in real time
                 let created = null;
                 try { created = await response.json(); } catch {}
                 msgDiv.innerHTML = '<p class="success">Категорію успішно додано</p>';
                 document.getElementById('catName').value = '';
                 await loadCategoriesList();
-                // if server returned created category, select it
                 if (created && created.id) {
                     const sel = document.getElementById('catSelect');
                     if (sel) sel.value = created.id;
@@ -324,12 +319,10 @@
             data.forEach(c=>{
                 const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name; sel.appendChild(opt);
             });
-            // try to restore previous selection if possible
             if (prev) {
                 const exists = Array.from(sel.options).some(o => o.value === prev);
                 if (exists) sel.value = prev;
             }
-            // populate categories list with delete buttons and preview images
             const list = document.getElementById('categoriesList');
             if(list){
                 list.innerHTML = '';
@@ -351,17 +344,14 @@
         }
 
         async function editCategory(id){
-            // load category and put values into create form for editing
             const r = await fetch('/api/categories/' + id);
             if(!r.ok) return alert('Категорія не знайдена');
             const c = await r.json();
             document.getElementById('catName').value = c.name;
-            // indicate edit mode via data attribute
             document.getElementById('catName').dataset.editId = c.id;
             document.getElementById('msg').innerHTML = '<p class="success">Редагуємо категорію #' + c.id + '</p>';
         }
 
-        // when saving category, if editId is present, perform PUT instead of POST
         const origAddCategory = addCategory;
         async function saveCategory(){
             const editId = document.getElementById('catName').dataset.editId;
@@ -377,7 +367,6 @@
                 await origAddCategory();
             }
         }
-        // replace button handler
         document.querySelector('button[onclick="addCategory()"]')?.setAttribute('onclick','saveCategory()');
 
         async function addItem(){
@@ -393,7 +382,6 @@
             const catId = parseInt(document.getElementById('catSelect').value);
             const file = document.getElementById('itemImage').files[0];
 
-            // client-side validation
             const msgEl = document.getElementById('itemMsg'); msgEl.innerHTML = '';
             if (!name || name.trim().length === 0) { msgEl.innerHTML = '<p class="error">Назва позиції обов\'язкова.</p>'; return; }
             if (price < 0 || price > 100000) { msgEl.innerHTML = '<p class="error">Ціна повинна бути в діапазоні 0–100000.</p>'; return; }
@@ -415,7 +403,6 @@
             const editId = document.getElementById('itemName').dataset.editId;
             let resp;
             if (editId) {
-                // Update existing
                 resp = await fetch('/api/menuitems/' + editId, {
                     method: 'PUT', headers: { 'Content-Type': 'application/json', 'Admin-Pass': adminPass },
                     body: JSON.stringify({ id: parseInt(editId), name: name, description: desc, price: price, categoryId: catId, imageUrl: imageUrl, calories: calories, protein: protein, fat: fat, carbs: carbs, allergens: allergens })
@@ -459,7 +446,6 @@
         function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(); r.readAsDataURL(file); }); }
 
         async function editItem(id){
-            // load item into form for editing
             const r = await fetch('/api/menuitems/' + id);
             if (!r.ok) return alert('Не знайдено');
             const it = await r.json();
@@ -472,7 +458,6 @@
             document.getElementById('itemCarbs').value = it.carbs || '';
             document.getElementById('itemAllergens').value = it.allergens || '';
             document.getElementById('catSelect').value = it.categoryId;
-            // set a data attribute to indicate edit mode
             document.getElementById('itemName').dataset.editId = it.id;
             document.getElementById('itemMsg').innerHTML = '<p class="success">Редагуємо позицію #' + it.id + '</p>';
         }
@@ -481,7 +466,6 @@
             const resp = await fetch('/api/menuitems');
             const data = await resp.json();
             const list = document.getElementById('itemsList'); list.innerHTML = '';
-            // ensure items list is visible when loading
             const itemsToggle = document.getElementById('itemsToggle');
             if (itemsToggle && list.style.display === 'none') list.style.display = 'block';
             data.forEach(it=>{
@@ -502,7 +486,6 @@
             });
         }
 
-        // toggle items list visibility when clicking heading
         document.getElementById('itemsToggle')?.addEventListener('click', ()=>{
             const list = document.getElementById('itemsList');
             if (!list) return;
