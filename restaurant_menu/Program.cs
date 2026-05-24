@@ -32,6 +32,30 @@ using (var scope = app.Services.CreateScope())
         var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var conn = ctx.Database.GetDbConnection();
         conn.Open();
+        using (var cmdTables = conn.CreateCommand())
+        {
+            cmdTables.CommandText = @"
+                CREATE TABLE IF NOT EXISTS Reviews (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    CustomerName TEXT,
+                    Text TEXT,
+                    Rating INTEGER
+                );
+                CREATE TABLE IF NOT EXISTS Tables (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    TableNumber INTEGER,
+                    Seats INTEGER,
+                    IsReserved INTEGER
+                );
+                CREATE TABLE IF NOT EXISTS SpecialOffers (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Title TEXT,
+                    Description TEXT,
+                    DiscountPercentage REAL
+                );
+            ";
+            cmdTables.ExecuteNonQuery();
+        }
         using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = "PRAGMA table_info('MenuItems');";
