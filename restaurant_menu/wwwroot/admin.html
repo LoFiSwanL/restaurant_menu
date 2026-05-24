@@ -146,6 +146,16 @@
             <input type="file" id="catImage" accept="image/*" />
             <button class="primary" onclick="addCategory()">Зберегти</button>
             <div id="msg"></div>
+
+            <div class="admin-container" style="max-width:900px;">
+                <h2>Керування акціями</h2>
+                <input type="text" id="offerTitle" placeholder="Назва акції (напр. Щасливі години)" />
+                <input type="text" id="offerDesc" placeholder="Опис акції" />
+                <input type="number" id="offerDisc" placeholder="Знижка (%)" />
+                <button class="primary" onclick="addOffer()">Створити акцію</button>
+                <div id="offerMsg"></div>
+                <div id="offersAdminList" style="margin-top:20px;text-align:left;color:#fff;"></div>
+            </div>
         </div>
         <div class="admin-container" style="max-width:900px;">
             <h3>Існуючі категорії</h3>
@@ -531,6 +541,44 @@
             } else {
                 alert('Не вдалось видалити');
             }
+        }
+
+        async function addOffer() {
+            if (!adminPass) return alert('Увійдіть');
+            const title = document.getElementById('offerTitle').value;
+            const desc = document.getElementById('offerDesc').value;
+            const disc = parseFloat(document.getElementById('offerDisc').value) || 0;
+            const res = await fetch('/api/specialoffers', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Admin-Pass': adminPass },
+                body: JSON.stringify({ title: title, description: desc, discountPercentage: disc })
+            });
+            if (res.ok) {
+                document.getElementById('offerMsg').innerHTML = '<p class="success">Акцію додано!</p>';
+                document.getElementById('offerTitle').value = ''; document.getElementById('offerDesc').value = ''; document.getElementById('offerDisc').value = '';
+                loadAdminOffers();
+            }
+        }
+
+        async function loadAdminOffers() {
+            const res = await fetch('/api/specialoffers', { cache: 'no-store' });
+            if (!res.ok) return;
+            const data = await res.json();
+            const list = document.getElementById('offersAdminList');
+            list.innerHTML = data.map(o => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #333;">
+                    <div>
+                        <b>${o.title || o.Title}</b> <span style="color:#c7a17a">(-${o.discountPercentage || o.DiscountPercentage}%)</span><br>
+                        <small>${o.description || o.Description}</small>
+                    </div>
+                    <button onclick="deleteOffer(${o.id || o.Id})" style="background:#a84f3a;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;">Видалити</button>
+                </div>
+            `).join('');
+        }
+
+        async function deleteOffer(id) {
+            if (!confirm('Видалити акцію?')) return;
+            await fetch('/api/specialoffers/' + id, { method: 'DELETE', headers: { 'Admin-Pass': adminPass } });
+            loadAdminOffers();
         }
     </script>
 </body>

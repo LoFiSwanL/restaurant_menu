@@ -93,6 +93,8 @@
         <button id="burger" aria-label="toggle menu" style="display:none;background:transparent;border:none;color:var(--muted);font-size:20px">☰</button>
         <nav class="nav" id="nav">
             <a href="#menu" data-target="menu">Меню</a>
+            <a href="#offers" data-target="offers">Акції</a>
+            <a href="#reviews" data-target="reviews">Відгуки</a>
             <a href="#about" data-target="about">Про нас</a>
             <a href="#contacts" data-target="contacts">Контакти</a>
         </nav>
@@ -120,6 +122,24 @@
 
     <main id="menu">
         <div id="categories">завантаження...</div>
+        <section id="offers" style="margin-top:48px;padding:28px 0;">
+            <h2 style="color:var(--accent);letter-spacing:1px;border-bottom:1px solid #222;padding-bottom:10px;max-width:1200px;margin:0 auto 20px;">Акції</h2>
+            <div id="offersList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;max-width:1200px;margin:0 auto;padding:0 16px;"></div>
+        </section>
+
+        <section id="reviews" style="margin-top:48px;padding:28px 0;">
+            <h2 style="color:var(--accent);letter-spacing:1px;border-bottom:1px solid #222;padding-bottom:10px;max-width:1200px;margin:0 auto 20px;">Відгуки гостей</h2>
+            <div id="reviewsList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;max-width:1200px;margin:0 auto 30px;padding:0 16px;"></div>
+
+            <div style="max-width:600px;margin:0 auto;background:#141414;padding:25px;border-radius:8px;border:1px solid #333;">
+                <h3 style="margin-top:0;color:#fff;">Залишити відгук</h3>
+                <input type="text" id="revName" placeholder="Ваше ім'я" style="width:100%;padding:12px;margin-bottom:12px;background:#222;border:1px solid #444;color:#fff;border-radius:4px;box-sizing:border-box;">
+                <textarea id="revText" placeholder="Ваші враження" style="width:100%;padding:12px;margin-bottom:12px;background:#222;border:1px solid #444;color:#fff;border-radius:4px;resize:vertical;min-height:80px;box-sizing:border-box;"></textarea>
+                <input type="number" id="revRating" placeholder="Оцінка (від 1 до 5)" min="1" max="5" style="width:100%;padding:12px;margin-bottom:12px;background:#222;border:1px solid #444;color:#fff;border-radius:4px;box-sizing:border-box;">
+                <button onclick="submitReview()" style="width:100%;background:var(--accent);color:#000;border:none;padding:12px;font-weight:bold;cursor:pointer;border-radius:4px;text-transform:uppercase;">Відправити</button>
+                <div id="revMsg" style="margin-top:10px;text-align:center;"></div>
+            </div>
+        </section>
         <section id="about" style="margin-top:48px;padding:28px 0;">
             <div style="max-width:900px;margin:0 auto;padding:0 16px;text-align:left;color:var(--muted)">
                 <h2 style="color:var(--accent);letter-spacing:1px">Про нас</h2>
@@ -165,25 +185,25 @@
     </div>
 
     <script>
-        function seedImage(seed, w=800, h=600){
+        function seedImage(seed, w = 800, h = 600) {
             return `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
         }
 
-        function getProp(obj, name){
-            if(!obj) return undefined;
-            if(name in obj) return obj[name];
+        function getProp(obj, name) {
+            if (!obj) return undefined;
+            if (name in obj) return obj[name];
             const camel = name.charAt(0).toLowerCase() + name.slice(1);
-            if(camel in obj) return obj[camel];
+            if (camel in obj) return obj[camel];
             const lower = name.toLowerCase();
-            if(lower in obj) return obj[lower];
+            if (lower in obj) return obj[lower];
             return undefined;
         }
 
-        function openModal(item){
+        function openModal(item) {
             document.getElementById('mTitle').textContent = item.name;
             document.getElementById('mDesc').textContent = item.description || '';
             const mImg = document.getElementById('mImg'); mImg.innerHTML = '';
-            if(item.imageUrl){ const img = document.createElement('img'); img.src = item.imageUrl; mImg.appendChild(img); }
+            if (item.imageUrl) { const img = document.createElement('img'); img.src = item.imageUrl; mImg.appendChild(img); }
             const mNutrition = document.getElementById('mNutrition'); mNutrition.innerHTML = '';
             const parts = [];
             if (item.calories) parts.push(`<div class="nut-badge">Калорії: ${item.calories} ккал</div>`);
@@ -196,13 +216,13 @@
             document.getElementById('modal').style.display = 'flex';
         }
 
-        function closeModal(e){
-            if(e.target.id === 'modal' || e.target.classList.contains('close')){
+        function closeModal(e) {
+            if (e.target.id === 'modal' || e.target.classList.contains('close')) {
                 document.getElementById('modal').style.display = 'none';
             }
         }
 
-        async function loadCategories(){
+        async function loadCategories() {
             const root = document.getElementById('categories');
             root.innerHTML = '<div style="padding:60px 16px;text-align:center;color:var(--muted)">Завантаження...</div>';
             try {
@@ -215,76 +235,76 @@
                 const data = await res.json();
                 root.innerHTML = '';
 
-                if(!Array.isArray(data) || data.length === 0){
+                if (!Array.isArray(data) || data.length === 0) {
                     root.innerHTML = '<div style="padding:80px 16px;text-align:center;color:var(--muted)"><h2 style="color:var(--accent)">Меню поки порожнє</h2><p>Поверніться пізніше або додайте позиції через адмінку.</p></div>';
-                return;
-            }
-
-            const defaultImage = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc4MDAnIGhlaWdodD0nNjAwJyB2aWV3Qm94PScwIDAgODAwIDYwMCc+PHJlY3Qgd2lkdGg9JzgwMCcgaGVpZ2h0PSc2MDAnIGZpbGw9JyMxNDE0MTQnLz48cGF0aCBkPSdNMjUwIDQwMCBDMjUwIDIwMCwgNTUwIDIwMCwgNTUwIDQwMCBaJyBmaWxsPScjYzdhMTdhJyBvcGFjaXR5PScwLjknLz48ZWxsaXBzZSBjeD0nNDAwJyBjeT0nNDAwJyByeD0nMTYwJyByeT0nMTUnIGZpbGw9JyNhODg0NWUnLz48Y2lyY2xlIGN4PSc0MDAnIGN5PScyMzAnIHI9JzIwJyBmaWxsPScjYzdhMTdhJy8+PHRleHQgeD0nNDAwJyB5PSc0OTAnIGZvbnQtZmFtaWx5PSdzYW5zLXNlcmlmJyBmb250LXNpemU9JzI4JyBmb250LXdlaWdodD0nYm9sZCcgZmlsbD0nIzc3NycgdGV4dC1hbmNob3I9J21pZGRsZScgbGV0dGVyLXNwYWNpbmc9JzQnPk5BTTwvdGV4dD48L3N2Zz4=";
-            data.forEach(cat => {
-                const wrap = document.createElement('div');
-                wrap.className = 'category-section';
-
-                const banner = document.createElement('div');
-                banner.className = 'cat-banner';
-                const img = document.createElement('img');
-
-                const firstImg = getProp(cat, 'ImageUrl') || (cat.menuItems && cat.menuItems.length && (getProp(cat.menuItems[0], 'ImageUrl') || getProp(cat.menuItems[0], 'imageUrl')));
-                img.src = firstImg || defaultImage;
-                img.alt = cat.name;
-                banner.appendChild(img);
-                const overlay = document.createElement('div'); overlay.className = 'overlay'; banner.appendChild(overlay);
-                const title = document.createElement('div'); title.className = 'cat-title'; title.textContent = cat.name; title.dataset.id = cat.id; banner.appendChild(title);
-
-                const items = document.createElement('div'); items.className = 'items';
-                const list = (cat.menuItems || []);
-
-                if (list.length === 0) {
-                    items.innerHTML = '<p style="color:var(--muted);margin:0">Позицій ще немає</p>';
-                } else {
-                    list.forEach(it => {
-                        const itEl = document.createElement('div'); itEl.className = 'item';
-                        const thumb = document.createElement('div'); thumb.className = 'thumb';
-
-                        const imageUrl = getProp(it, 'ImageUrl') || getProp(it, 'imageUrl');
-                        const timg = document.createElement('img');
-
-                        timg.src = imageUrl || defaultImage;
-                        timg.alt = getProp(it, 'Name') || '';
-
-                        thumb.appendChild(timg);
-
-                        const left = document.createElement('div'); left.className = 'item-left';
-                        const h = document.createElement('h3'); h.textContent = getProp(it, 'Name') || getProp(it, 'name') || ''; left.appendChild(h);
-                        const d = document.createElement('p'); d.className = 'desc'; d.textContent = getProp(it, 'Description') || getProp(it, 'description') || ''; left.appendChild(d);
-                        const right = document.createElement('div'); right.className = 'item-right'; const priceVal = getProp(it, 'Price') || getProp(it, 'price'); right.textContent = priceVal ? parseFloat(priceVal).toFixed(2) + ' ₴' : '';
-
-                        itEl.appendChild(thumb);
-                        itEl.appendChild(left);
-                        itEl.appendChild(right);
-                        itEl.style.cursor = 'pointer';
-                        itEl.addEventListener('click', () => openModal(it));
-
-                        items.appendChild(itEl);
-                    });
+                    return;
                 }
 
+                const defaultImage = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc4MDAnIGhlaWdodD0nNjAwJyB2aWV3Qm94PScwIDAgODAwIDYwMCc+PHJlY3Qgd2lkdGg9JzgwMCcgaGVpZ2h0PSc2MDAnIGZpbGw9JyMxNDE0MTQnLz48cGF0aCBkPSdNMjUwIDQwMCBDMjUwIDIwMCwgNTUwIDIwMCwgNTUwIDQwMCBaJyBmaWxsPScjYzdhMTdhJyBvcGFjaXR5PScwLjknLz48ZWxsaXBzZSBjeD0nNDAwJyBjeT0nNDAwJyByeD0nMTYwJyByeT0nMTUnIGZpbGw9JyNhODg0NWUnLz48Y2lyY2xlIGN4PSc0MDAnIGN5PScyMzAnIHI9JzIwJyBmaWxsPScjYzdhMTdhJy8+PHRleHQgeD0nNDAwJyB5PSc0OTAnIGZvbnQtZmFtaWx5PSdzYW5zLXNlcmlmJyBmb250LXNpemU9JzI4JyBmb250LXdlaWdodD0nYm9sZCcgZmlsbD0nIzc3NycgdGV4dC1hbmNob3I9J21pZGRsZScgbGV0dGVyLXNwYWNpbmc9JzQnPk5BTTwvdGV4dD48L3N2Zz4=";
+                data.forEach(cat => {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'category-section';
 
-                wrap.appendChild(banner);
-                wrap.appendChild(items);
-                root.appendChild(wrap);
-            });
-        const chips = document.getElementById('chips');
-        chips.innerHTML = '';
-        data.forEach(c=>{
-            const ch = document.createElement('div'); ch.className='chip'; ch.textContent = c.name; ch.onclick = ()=> { document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); ch.classList.add('active'); filterByCategory(c.id); };
-            chips.appendChild(ch);
-        });
-        const next = document.getElementById('chipsNext');
-        if(next) next.style.display = 'none';
-            document.querySelectorAll('.category-section').forEach((el,i)=>{
-                setTimeout(()=>el.classList.add('visible'), i*80);
-            });
+                    const banner = document.createElement('div');
+                    banner.className = 'cat-banner';
+                    const img = document.createElement('img');
+
+                    const firstImg = getProp(cat, 'ImageUrl') || (cat.menuItems && cat.menuItems.length && (getProp(cat.menuItems[0], 'ImageUrl') || getProp(cat.menuItems[0], 'imageUrl')));
+                    img.src = firstImg || defaultImage;
+                    img.alt = cat.name;
+                    banner.appendChild(img);
+                    const overlay = document.createElement('div'); overlay.className = 'overlay'; banner.appendChild(overlay);
+                    const title = document.createElement('div'); title.className = 'cat-title'; title.textContent = cat.name; title.dataset.id = cat.id; banner.appendChild(title);
+
+                    const items = document.createElement('div'); items.className = 'items';
+                    const list = (cat.menuItems || []);
+
+                    if (list.length === 0) {
+                        items.innerHTML = '<p style="color:var(--muted);margin:0">Позицій ще немає</p>';
+                    } else {
+                        list.forEach(it => {
+                            const itEl = document.createElement('div'); itEl.className = 'item';
+                            const thumb = document.createElement('div'); thumb.className = 'thumb';
+
+                            const imageUrl = getProp(it, 'ImageUrl') || getProp(it, 'imageUrl');
+                            const timg = document.createElement('img');
+
+                            timg.src = imageUrl || defaultImage;
+                            timg.alt = getProp(it, 'Name') || '';
+
+                            thumb.appendChild(timg);
+
+                            const left = document.createElement('div'); left.className = 'item-left';
+                            const h = document.createElement('h3'); h.textContent = getProp(it, 'Name') || getProp(it, 'name') || ''; left.appendChild(h);
+                            const d = document.createElement('p'); d.className = 'desc'; d.textContent = getProp(it, 'Description') || getProp(it, 'description') || ''; left.appendChild(d);
+                            const right = document.createElement('div'); right.className = 'item-right'; const priceVal = getProp(it, 'Price') || getProp(it, 'price'); right.textContent = priceVal ? parseFloat(priceVal).toFixed(2) + ' ₴' : '';
+
+                            itEl.appendChild(thumb);
+                            itEl.appendChild(left);
+                            itEl.appendChild(right);
+                            itEl.style.cursor = 'pointer';
+                            itEl.addEventListener('click', () => openModal(it));
+
+                            items.appendChild(itEl);
+                        });
+                    }
+
+
+                    wrap.appendChild(banner);
+                    wrap.appendChild(items);
+                    root.appendChild(wrap);
+                });
+                const chips = document.getElementById('chips');
+                chips.innerHTML = '';
+                data.forEach(c => {
+                    const ch = document.createElement('div'); ch.className = 'chip'; ch.textContent = c.name; ch.onclick = () => { document.querySelectorAll('.chip').forEach(x => x.classList.remove('active')); ch.classList.add('active'); filterByCategory(c.id); };
+                    chips.appendChild(ch);
+                });
+                const next = document.getElementById('chipsNext');
+                if (next) next.style.display = 'none';
+                document.querySelectorAll('.category-section').forEach((el, i) => {
+                    setTimeout(() => el.classList.add('visible'), i * 80);
+                });
             }
             catch (err) {
                 root.innerHTML = `<div style="padding:60px 16px;text-align:center;color:var(--muted)">Помилка при обробці даних меню</div>`;
@@ -294,11 +314,11 @@
 
         loadCategories();
 
-        function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
+        function debounce(fn, wait) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), wait); }; }
 
-        document.getElementById('searchInput')?.addEventListener('input', debounce((e)=>{
+        document.getElementById('searchInput')?.addEventListener('input', debounce((e) => {
             const q = e.target.value.toLowerCase().trim();
-            document.querySelectorAll('.item').forEach(it=>{
+            document.querySelectorAll('.item').forEach(it => {
                 const name = it.querySelector('h3')?.textContent?.toLowerCase() || '';
                 const desc = it.querySelector('.desc')?.textContent?.toLowerCase() || '';
                 const show = q === '' || name.includes(q) || desc.includes(q);
@@ -306,45 +326,90 @@
             });
         }, 180));
 
-        function filterByCategory(catId){
-            const sec = Array.from(document.querySelectorAll('.category-section')).find(s=> s.querySelector('.cat-title')?.dataset.id == catId);
-            if(sec) sec.scrollIntoView({behavior:'smooth',block:'start'});
+        function filterByCategory(catId) {
+            const sec = Array.from(document.querySelectorAll('.category-section')).find(s => s.querySelector('.cat-title')?.dataset.id == catId);
+            if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         const topbar = document.querySelector('.topbar');
-        window.addEventListener('scroll', ()=>{
-            if(window.scrollY>40) topbar.classList.add('scrolled'); else topbar.classList.remove('scrolled');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 40) topbar.classList.add('scrolled'); else topbar.classList.remove('scrolled');
             updateActiveNav();
         });
 
-        document.querySelectorAll('.nav a').forEach(a=>{
-            a.addEventListener('click', e=>{
+        document.querySelectorAll('.nav a').forEach(a => {
+            a.addEventListener('click', e => {
                 e.preventDefault();
                 const target = a.getAttribute('href').slice(1);
                 const el = document.getElementById(target);
-                if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
 
-        function updateActiveNav(){
-            const sections = ['menu','about','contacts'];
+        function updateActiveNav() {
+            const sections = ['menu', 'offers', 'reviews', 'about', 'contacts'];
             let current = 'menu';
             const y = window.scrollY + 120;
-            for(const s of sections){
+            for (const s of sections) {
                 const el = document.getElementById(s);
-                if(el && el.offsetTop <= y) current = s;
+                if (el && el.offsetTop <= y) current = s;
             }
-            document.querySelectorAll('.nav a').forEach(a=> a.classList.toggle('active', a.getAttribute('href').slice(1)===current));
+            document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('active', a.getAttribute('href').slice(1) === current));
         }
 
         const burger = document.getElementById('burger');
         const nav = document.getElementById('nav');
-        function checkMobile(){
-            if(window.innerWidth < 780){ burger.style.display='block'; nav.style.display='none'; } else { burger.style.display='none'; nav.style.display='block'; }
+        function checkMobile() {
+            if (window.innerWidth < 780) { burger.style.display = 'block'; nav.style.display = 'none'; } else { burger.style.display = 'none'; nav.style.display = 'block'; }
         }
-        burger?.addEventListener('click', ()=>{ nav.style.display = nav.style.display === 'block' ? 'none' : 'block'; });
+        burger?.addEventListener('click', () => { nav.style.display = nav.style.display === 'block' ? 'none' : 'block'; });
         window.addEventListener('resize', checkMobile);
         checkMobile();
+
+        async function loadExtras() {
+            try {
+                const oRes = await fetch('/api/specialoffers', { cache: 'no-store' });
+                if (oRes.ok) {
+                    const offers = await oRes.json();
+                    document.getElementById('offersList').innerHTML = offers.map(o => `
+                        <div style="background:#141414;border:1px solid var(--accent);padding:20px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.4);">
+                            <h3 style="margin:0 0 10px;color:#fff;">${o.title || o.Title || 'Без назви'}</h3>
+                            <p style="color:var(--muted);font-size:14px;margin-bottom:15px;">${o.description || o.Description || ''}</p>
+                            <span style="background:var(--accent);color:#000;padding:4px 8px;border-radius:4px;font-weight:bold;font-size:12px;text-transform:uppercase;">Знижка: -${o.discountPercentage || o.DiscountPercentage || 0}%</span>
+                        </div>
+                    `).join('');
+                }
+
+                const rRes = await fetch('/api/reviews', { cache: 'no-store' });
+                if (rRes.ok) {
+                    const revs = await rRes.json();
+                    document.getElementById('reviewsList').innerHTML = revs.map(r => `
+                        <div style="background:#141414;border-left:3px solid var(--accent);padding:20px;border-radius:4px;">
+                            <p style="margin:0 0 10px;font-style:italic;color:#eee;">"${r.text || r.Text || ''}"</p>
+                            <h4 style="margin:0;color:var(--accent);font-weight:normal;font-size:14px;">${r.customerName || r.CustomerName || 'Гість'} <span style="letter-spacing:2px;margin-left:5px;">${'★'.repeat(r.rating || r.Rating || 5)}</span></h4>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) { console.error("Помилка завантаження додатків:", e); }
+        }
+        loadExtras();
+
+        async function submitReview() {
+            const name = document.getElementById('revName').value;
+            const text = document.getElementById('revText').value;
+            const rating = parseInt(document.getElementById('revRating').value);
+            if (!name || !text || !rating || rating < 1 || rating > 5) return alert('Будь ласка, заповніть всі поля і вкажіть оцінку від 1 до 5');
+
+            const res = await fetch('/api/reviews', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customerName: name, text: text, rating: rating })
+            });
+            if (res.ok) {
+                document.getElementById('revMsg').innerHTML = '<span style="color:#4CAF50">Дякуємо! Ваш відгук додано.</span>';
+                document.getElementById('revName').value = ''; document.getElementById('revText').value = ''; document.getElementById('revRating').value = '';
+                loadExtras();
+            }
+        }
     </script>
 </body>
 </html>

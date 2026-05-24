@@ -117,4 +117,25 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.MapGet("/api/tables", async (AppDbContext ctx) => await ctx.Tables.ToListAsync());
+
+app.MapGet("/api/specialoffers", async (AppDbContext ctx) => await ctx.SpecialOffers.ToListAsync());
+app.MapPost("/api/specialoffers", async (AppDbContext ctx, NamRestaurantApi.Models.SpecialOffer offer) => {
+    ctx.SpecialOffers.Add(offer);
+    await ctx.SaveChangesAsync();
+    return Results.Ok(offer);
+});
+app.MapDelete("/api/specialoffers/{id}", async (AppDbContext ctx, int id) => {
+    var offer = await ctx.SpecialOffers.FindAsync(id);
+    if (offer != null) { ctx.SpecialOffers.Remove(offer); await ctx.SaveChangesAsync(); }
+    return Results.Ok();
+});
+
+app.MapGet("/api/reviews", async (AppDbContext ctx) => await ctx.Reviews.ToListAsync());
+app.MapPost("/api/reviews", async (AppDbContext ctx, NamRestaurantApi.Models.Review r) => {
+    ctx.Reviews.Add(r);
+    await ctx.SaveChangesAsync();
+    return Results.Ok(r);
+});
+
 app.Run();
