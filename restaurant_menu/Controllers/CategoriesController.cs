@@ -246,7 +246,6 @@ namespace NamRestaurantApi.Controllers
             }
             await _context.SaveChangesAsync();
             _context.Categories.Remove(existing);
-            _context.Categories.Remove(existing);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "merged", newId = newCat.Id });
